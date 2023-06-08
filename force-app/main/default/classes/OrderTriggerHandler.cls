@@ -6,7 +6,7 @@ public with sharing class OrderTriggerHandler {
      * @param ordersList => List<Order> Trigger.New orders
      * @return void
      */
-    public static void checkOderHasProduct(List<Order> ordersList) {
+    public static void checkOderHasOrderItem(List<Order> ordersList) {
         List<Order> activatedOrderList = new List<Order>();
         for (Order ordr : ordersList) {
             if(ordr.Status == 'Activated') {
@@ -19,7 +19,6 @@ public with sharing class OrderTriggerHandler {
         for (OrderItem oi : [SELECT Id, OrderId FROM OrderItem WHERE OrderId IN : activatedOrderList]) {
             orderWithItemsIdSet.add(oi.OrderId);
         }
-        System.debug('^mpfezf');
 
         for (Order ordr : activatedOrderList) {
             if(!orderWithItemsIdSet.contains(ordr.Id)) {
@@ -29,4 +28,45 @@ public with sharing class OrderTriggerHandler {
     }
 
 
+    public static void activateAccountField(List<Order> ordersList) {
+        Set<Id> orderAccountIdSet = new Set<Id>();
+
+        // I retrieve all related Accounts with Order
+        for (Order odrd : ordersList) {
+            orderAccountIdSet.add(odrd.AccountId);
+        }
+
+        List<Account> accountsToUpdateList= new List<Account>();
+        // Setting Active__c to true
+        for (Account acc : [SELECT Id, Active__c FROM Account WHERE Id IN :orderAccountIdSet]) {
+            acc.Active__c = true;
+            accountsToUpdateList.add(acc);
+        }
+
+        update accountsToUpdateList;
+    }
+
+
+    public static void deactiveAccountField(List<Order> ordersList) {
+        //Je dois récupérer tout les accounts lié aux order supprimé
+        Set<Id> orderAccountIdSet = new Set<Id>();
+
+        // Je récupère Related account ID 
+        for (Order odrd : ordersList) {
+            orderAccountIdSet.add(odrd.AccountId);
+        }
+        List<Account> accountsToUpdateList= new List<Account>();
+
+        // Je boucle sur 
+        for (Account acc : [SELECT Id, Active__c ,(SELECT id from Orders) FROM Account WHERE Id IN :orderAccountIdSet]) {
+            System.debug(acc.Orders);
+            if(acc.Orders.size() == 0){
+                System.debug('plouf');
+                acc.Active__c = false;
+                accountsToUpdateList.add(acc);
+            }
+        }
+        update accountsToUpdateList;
+    }
+    
 }
