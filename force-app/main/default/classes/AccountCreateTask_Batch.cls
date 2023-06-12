@@ -1,10 +1,10 @@
 /**
- * @description       : batch qui récupère les comptes n’ayant pas d’order associés ni des tâches de rappel 
- * et crée des tâches et les rattachent à ce compte.
+ * @description       : Batch class to process Accounts that don't have related Order and no Tasks to remind Owners to call Account
+ * 
  * @author            : Raphaël HOUDRY
  * @last modified on  : 09/06/23
 **/
-public with sharing class AccountCreateTask_Batch implements Database.Batchable<sObject> {
+global with sharing class AccountCreateTask_Batch implements Database.Batchable<sObject> {
  
 
     // Return Accounts that are not Activated (that don't have an Order), and check if there is a related Task with Subject == Call
@@ -16,8 +16,10 @@ public with sharing class AccountCreateTask_Batch implements Database.Batchable<
             );
     }
 
+    // For each Account without a call Task and without an Order, create a new Task and assign it to Account owner
     global void execute(Database.BatchableContext bc, List<Account> scope) {
-        List<Task> tastList = new List<Task>();
+        List<Task> taskList = new List<Task>();
+        Date datePlusFiveDays = Date.today().addDays(5);
 
         for (Account acc : scope) {
             if(acc.Tasks.size() == 0) {
@@ -25,18 +27,19 @@ public with sharing class AccountCreateTask_Batch implements Database.Batchable<
                     OwnerId = acc.OwnerId,
                     WhatId = acc.Id,
                     Subject = 'Call',
-                    Status = 'Nouvelle',
-                    Priority = 'Normale',
+                    Status = 'New',
+                    Priority = 'Normal',
                     IsReminderSet = true,
-                    ReminderDateTime = System.now() + 5
+                    ReminderDateTime = datePlusFiveDays
                 );
-                tastList.add(tsk);
+                taskList.add(tsk);
             }
         }
-        insert tastList;
+        insert taskList;
     }
 
-    global void finish() {
+    // No finish method to execute
+    global void finish(Database.BatchableContext bc) {
         // No finish
     }
 

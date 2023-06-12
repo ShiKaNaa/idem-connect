@@ -1,3 +1,8 @@
+/**
+ * @description Trigger handler of Order object
+ * @author Raphaël HOUDRY
+ * @last modified 12-06-2023
+ */
 public with sharing class OrderTriggerHandler {
 
     /**
@@ -27,7 +32,12 @@ public with sharing class OrderTriggerHandler {
         }
     }
 
-
+    /**
+     * Method that will set Account.Active__c to TRUE if Account has at least one Order
+     * 
+     * @param ordersList => List<Order> Trigger.New orders
+     * @return void
+     */
     public static void activateAccountField(List<Order> ordersList) {
         Set<Id> orderAccountIdSet = new Set<Id>();
         List<Account> accountsToUpdateList= new List<Account>();
@@ -46,6 +56,12 @@ public with sharing class OrderTriggerHandler {
         update accountsToUpdateList;
     }
 
+    /**
+     * Method that will set Account.Active__c to FALSE if Account has no related Order
+     * 
+     * @param ordersList => List<Order> Trigger.Old orders
+     * @return void
+     */
 
     public static void deactiveAccountField(List<Order> ordersList) {
         Set<Id> orderAccountIdSet = new Set<Id>();
